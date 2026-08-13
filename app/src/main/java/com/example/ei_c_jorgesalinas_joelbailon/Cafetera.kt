@@ -8,49 +8,77 @@ import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RadioButton
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 
-private const val TINACO_WS_URL = "ws://jorgeeliodor.com:5000/ws/tinaco"
+private const val CAFETERA_WS_URL = "ws://jorgeeliodor.com:5000/ws/cafetera"
 
 private val COLOR_CONECTADO = Color.parseColor("#4CAF50")    // verde
 private val COLOR_DESCONECTADO = Color.parseColor("#D03F3F") // rojo
 
-/** Modelo propio del tinaco, armado a partir del JSON que manda /ws/tinaco */
-data class EstadoTinaco(
-    val nivel: Double,
-    val bombaEncendida: Boolean,
-    val puedeEncender: Boolean,
-    val puedeApagar: Boolean,
+
+data class EstadoCafetera(
+    val encendida: Boolean,
     val timestamp: String
 )
 
-class Tinaco : AppCompatActivity() {
+class Cafetera : AppCompatActivity() {
 
-    private lateinit var labelNivelAgua: TextView
-    private lateinit var textView3: TextView   // "Estado de la bomba"
+    // TODO: agrega estas vistas a tu activity_cafetera.xml con estos IDs
+    //   - RadioButton  android:id="@+id/radioButtonCafetera"
+    //   - Button       android:id="@+id/botonEncenderCafetera"
+    //   - Button       android:id="@+id/botonApagarCafetera"
     private lateinit var radioButton: RadioButton
     private lateinit var botonEncender: Button
     private lateinit var botonApagar: Button
 
     private lateinit var conexion: Conexion
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_tinaco)
+        setContentView(R.layout.activity_cafetera)
 
-        val regresar = findViewById<ImageButton>(R.id.imageButton)
-        labelNivelAgua = findViewById(R.id.labelNivelAgua)
-        textView3 = findViewById(R.id.textView3)
         radioButton = findViewById(R.id.estadoServidor)
-        botonEncender = findViewById(R.id.button4)
-        botonApagar = findViewById(R.id.button5)
+        botonEncender = findViewById(R.id.botonEncenderCafetera)
+        botonApagar = findViewById(R.id.botonApagarCafetera)
+        val regresar = findViewById<ImageButton>(R.id.imageButton)
 
         setIndicadorConexion(conectado = false)
+
+        conexion = Conexion(
+            serverUrl = CAFETERA_WS_URL,
+            onConectado = {
+                runOnUiThread { setIndicadorConexion(conectado = true) }
+            },
+            onDesconectado = {
+                runOnUiThread { setIndicadorConexion(conectado = false) }
+            },
+            onMensaje = { texto ->
+                try {
+                    val json = JSONObject(texto)
+                    val estado = EstadoCafetera(
+                        encendida = json.getBoolean("encendida"),
+                        timestamp = json.getString("timestamp")
+                    )
+                    runOnUiThread {
+                        botonEncender.isEnabled = !estado.encendida
+                        botonApagar.isEnabled = estado.encendida
+                    }
+                } catch (e: Exception) {
+                    Log.e("CAFETERA", "Error al parsear mensaje", e)
+                }
+            },
+            onError = { t ->
+                runOnUiThread {
+                    Toast.makeText(this, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
 
         regresar.setOnClickListener {
             try {
@@ -61,44 +89,6 @@ class Tinaco : AppCompatActivity() {
                 Log.e("ERROR_MAIN", "Error", e)
             }
         }
-
-        conexion = Conexion(
-            serverUrl = TINACO_WS_URL,
-            onConectado = {
-                runOnUiThread { setIndicadorConexion(conectado = true) }
-            },
-            onDesconectado = {
-                runOnUiThread { setIndicadorConexion(conectado = false) }
-            },
-            onMensaje = { texto ->
-                try {
-                    val json = JSONObject(texto)
-                    val estado = EstadoTinaco(
-                        nivel = json.getDouble("nivel"),
-                        bombaEncendida = json.getBoolean("bomba_encendida"),
-                        puedeEncender = json.getBoolean("puede_encender"),
-                        puedeApagar = json.getBoolean("puede_apagar"),
-                        timestamp = json.getString("timestamp")
-                    )
-                    runOnUiThread {
-                        labelNivelAgua.text = "${estado.nivel}%"
-                        textView3.text = if (estado.bombaEncendida)
-                            "Estado de la bomba: Encendida"
-                        else
-                            "Estado de la bomba: Apagada"
-                        botonEncender.isEnabled = estado.puedeEncender
-                        botonApagar.isEnabled = estado.puedeApagar
-                    }
-                } catch (e: Exception) {
-                    Log.e("TINACO", "Error al parsear mensaje", e)
-                }
-            },
-            onError = { t ->
-                runOnUiThread {
-                    Log.e("TINACO", "Error de conexión: ${t.message}")
-                }
-            }
-        )
 
         botonEncender.setOnClickListener {
             val enviado = conexion.enviarMensaje("""{"comando":"encender"}""")

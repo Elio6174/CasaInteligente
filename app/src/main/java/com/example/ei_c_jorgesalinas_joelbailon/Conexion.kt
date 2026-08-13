@@ -7,43 +7,13 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-/**
- * Modelo de una lectura recibida del servidor.
- * Coincide con el JSON que manda el servidor:
- *   {"nivel": 63.5, "bomba_encendida": true, "timestamp": "2026-08-13T10:00:00"}
- */
-data class EstadoTinaco(
-    val nivel: Double,
-    val bombaEncendida: Boolean,
-    val puedeEncender: Boolean,
-    val puedeApagar: Boolean,
-    val timestamp: String
-)
-
-/**
- * Clase encargada exclusivamente de manejar la conexión WebSocket
- * con el servidor. No conoce nada de la UI: solo notifica cambios
- * a través de callbacks para que la Activity decida qué hacer.
- *
- * Uso:
- *   val conexion = Conexion(
- *       serverUrl = "ws://TU_IP:8000/ws/tinaco",
- *       onConectado = { ... },
- *       onDesconectado = { ... },
- *       onNivelActualizado = { nivel -> ... }
- *   )
- *   conexion.conectar()
- *   ...
- *   conexion.desconectar() // en onDestroy()
- */
 class Conexion(
     private val serverUrl: String,
     private val onConectado: () -> Unit,
     private val onDesconectado: () -> Unit,
-    private val onEstadoActualizado: (EstadoTinaco) -> Unit,
+    private val onMensaje: (String) -> Unit,
     private val onError: ((Throwable) -> Unit)? = null
 ) {
     private var webSocket: WebSocket? = null
@@ -67,19 +37,7 @@ class Conexion(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                try {
-                    val json = JSONObject(text)
-                    val estado = EstadoTinaco(
-                        nivel = json.getDouble("nivel"),
-                        bombaEncendida = json.getBoolean("bomba_encendida"),
-                        puedeEncender = json.getBoolean("puede_encender"),
-                        puedeApagar = json.getBoolean("puede_apagar"),
-                        timestamp = json.getString("timestamp")
-                    )
-                    onEstadoActualizado(estado)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error al parsear mensaje", e)
-                }
+                onMensaje(text)
             }
 
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -105,12 +63,12 @@ class Conexion(
         })
     }
 
-    /** Envía un mensaje de texto al servidor (ej. para encender/apagar la bomba). */
+    /** Envía un mensaje de texto al servidor (ej. comandos como encender/apagar). */
     fun enviarMensaje(mensaje: String): Boolean {
         return webSocket?.send(mensaje) ?: false
     }
 
-    /** Cierra la conexión de forma ordenada. Llamar en onDestroy(). */
+    /** Cierra la conexión de forma ordenada. Llamar en onStop() u onDestroy(). */
     fun desconectar() {
         webSocket?.close(1000, "Cliente cerró la conexión")
     }

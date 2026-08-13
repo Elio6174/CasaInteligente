@@ -17,13 +17,23 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val btnTinaco = findViewById<Button>(R.id.btnTinaco)
+        val btnCafetera = findViewById<Button>(R.id.btnCafetera)
 
         btnTinaco.setOnClickListener {
             try {
                 startActivity(Intent(this, Tinaco::class.java))
             } catch (e: Exception) {
                 Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
-                Log.e("ERROR_Tinaco", "Error", e)
+                Log.e("ERROR_TINACO", "Error", e)
+            }
+        }
+
+        btnCafetera.setOnClickListener {
+            try {
+                startActivity(Intent(this, Cafetera::class.java))
+            } catch (e: Exception) {
+                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
+                Log.e("ERROR_CAFETERA", "Error", e)
             }
         }
     }

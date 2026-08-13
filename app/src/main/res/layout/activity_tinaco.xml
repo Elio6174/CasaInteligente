@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:fontFamily="sans-serif-black"
-        android:text="70%"
+        android:text="0%"
         android:textColor="#2196F3"
         android:textSize="60sp"
         android:textStyle="bold"
@@ -87,7 +87,7 @@
         app:srcCompat="@drawable/flecha" />
 
     <RadioButton
-        android:id="@+id/radioButton"
+        android:id="@+id/estadoServidor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="248dp"
