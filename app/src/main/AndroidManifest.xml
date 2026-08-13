@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EI_C_JorgeSalinas_JoelBailon">
         <activity
+            android:name=".Tinaco"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
