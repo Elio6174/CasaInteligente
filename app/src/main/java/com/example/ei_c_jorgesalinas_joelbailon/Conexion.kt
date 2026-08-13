@@ -4,170 +4,118 @@ import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-internal class {
-    internal inner class NivelTinaco
+/**
+ * Modelo de una lectura recibida del servidor.
+ * Coincide con el JSON que manda el servidor:
+ *   {"nivel": 63.5, "bomba_encendida": true, "timestamp": "2026-08-13T10:00:00"}
+ */
+data class EstadoTinaco(
+    val nivel: Double,
+    val bombaEncendida: Boolean,
+    val puedeEncender: Boolean,
+    val puedeApagar: Boolean,
+    val timestamp: String
+)
 
-    internal inner class Conexion
+/**
+ * Clase encargada exclusivamente de manejar la conexión WebSocket
+ * con el servidor. No conoce nada de la UI: solo notifica cambios
+ * a través de callbacks para que la Activity decida qué hacer.
+ *
+ * Uso:
+ *   val conexion = Conexion(
+ *       serverUrl = "ws://TU_IP:8000/ws/tinaco",
+ *       onConectado = { ... },
+ *       onDesconectado = { ... },
+ *       onNivelActualizado = { nivel -> ... }
+ *   )
+ *   conexion.conectar()
+ *   ...
+ *   conexion.desconectar() // en onDestroy()
+ */
+class Conexion(
+    private val serverUrl: String,
+    private val onConectado: () -> Unit,
+    private val onDesconectado: () -> Unit,
+    private val onEstadoActualizado: (EstadoTinaco) -> Unit,
+    private val onError: ((Throwable) -> Unit)? = null
+) {
+    private var webSocket: WebSocket? = null
 
-    private val onDesconectado: `val`? = null
-    private val onNivelActualizado: `val`? = null
-    private val onError: `val`? = null
-    private var webSocket: `var`? = null
-    private val client: `val` = OkHttpClient.Builder()
+    private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.MILLISECONDS) // sin timeout, la conexión debe quedar abierta
-        .pingInterval(20, TimeUnit.SECONDS) // mantiene la conexión viva
+        .pingInterval(20, TimeUnit.SECONDS)     // mantiene la conexión viva
         .build()
 
-    /** Inicia la conexión con el servidor.  */
-    fun conectar(): `fun`? {
-        val request: `val`? = Request.Builder()
+    /** Inicia la conexión con el servidor. */
+    fun conectar() {
+        val request = Request.Builder()
             .url(serverUrl)
             .build()
 
-        webSocket = client.newWebSocket(request, `object`)
-        WebSocketListener()
-        run {
-            val `fun`: override?
-            onOpen(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, response
-            """.trimMargin()
-            )
-            Response
-            run {
-                Log.i(TAG, "Conectado al servidor: \$serverUrl")
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                Log.i(TAG, "Conectado al servidor: $serverUrl")
                 onConectado()
             }
 
-            val `fun`: override?
-            onMessage(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, text
-            """.trimMargin()
-            )
-            String
-            run {
+            override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
-                    val json: `val` = JSONObject(text)
-                    var nivel: `val`? = NivelTinaco(
-                        json.getDouble("nivel").also { nivel = it },
-                        json.getString("timestamp").also { timestamp = it }
+                    val json = JSONObject(text)
+                    val estado = EstadoTinaco(
+                        nivel = json.getDouble("nivel"),
+                        bombaEncendida = json.getBoolean("bomba_encendida"),
+                        puedeEncender = json.getBoolean("puede_encender"),
+                        puedeApagar = json.getBoolean("puede_apagar"),
+                        timestamp = json.getString("timestamp")
                     )
-                    onNivelActualizado(nivel)
-                } catch (NO_NAME_PROVIDED)
-                Exception
-                run {
+                    onEstadoActualizado(estado)
+                } catch (e: Exception) {
                     Log.e(TAG, "Error al parsear mensaje", e)
                 }
             }
 
-            val `fun`: override?
-            onMessage(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, bytes
-            """.trimMargin()
-            )
-            ByteString
-            run {}
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                // No usamos mensajes binarios en este proyecto
+            }
 
-            val `fun`: override?
-            onClosing(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, code
-            """.trimMargin()
-            )
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |Int, reason
-            """.trimMargin()
-            )
-            String
-            run {
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 webSocket.close(1000, null)
-                Log.i(TAG, "Cerrando conexión: \$reason")
+                Log.i(TAG, "Cerrando conexión: $reason")
                 onDesconectado()
             }
 
-            val `fun`: override?
-            onClosed(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, code
-            """.trimMargin()
-            )
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |Int, reason
-            """.trimMargin()
-            )
-            String
-            run {
-                Log.i(TAG, "Conexión cerrada: \$reason")
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                Log.i(TAG, "Conexión cerrada: $reason")
                 onDesconectado()
             }
 
-            val `fun`: override?
-            onFailure(webSocket)
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |WebSocket, t
-            """.trimMargin()
-            )
-            TODO(
-                """
-            |Cannot convert element
-            |With text:
-            |Throwable, response
-            """.trimMargin()
-            )
-            if (Response)
-                run {
-                    Log.e(TAG, "Falla en la conexión", t)
-                    onDesconectado()
-                    if (onError)
-                        invoke(t)
-                }
-        }
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.e(TAG, "Falla en la conexión", t)
+                onDesconectado()
+                onError?.invoke(t)
+            }
+        })
     }
 
-    /** Envía un mensaje de texto al servidor (ej. para encender/apagar la bomba).  */
-    fun enviarMensaje(): `fun`?
-    fun Boolean() {
-        return if (webSocket)
-            if (send(mensaje))
-                false
+    /** Envía un mensaje de texto al servidor (ej. para encender/apagar la bomba). */
+    fun enviarMensaje(mensaje: String): Boolean {
+        return webSocket?.send(mensaje) ?: false
     }
 
-    /** Cierra la conexión de forma ordenada. Llamar en onDestroy().  */
-    fun desconectar(): `fun`? {
-        if (webSocket)
-            close(1000, "Cliente cerró la conexión")
+    /** Cierra la conexión de forma ordenada. Llamar en onDestroy(). */
+    fun desconectar() {
+        webSocket?.close(1000, "Cliente cerró la conexión")
     }
 
-    var `object`: companion? = null
-    var TAG: `val` = "Conexion"
+    companion object {
+        private const val TAG = "Conexion"
+    }
 }
