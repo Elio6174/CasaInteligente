@@ -90,10 +90,43 @@
         android:id="@+id/estadoServidor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="248dp"
         android:layout_marginTop="60dp"
+        android:layout_marginEnd="16dp"
         android:buttonTint="#D03F3F"
         android:enabled="false"
-        app:layout_constraintStart_toEndOf="@+id/imageButton"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <RadioButton
+        android:id="@+id/estadoSensor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="16dp"
+        android:buttonTint="#D03F3F"
+        android:enabled="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txtServidor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:layout_marginEnd="20dp"
+        android:text="Servidor"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/estadoServidor"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txtSensor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:layout_marginEnd="28dp"
+        android:text="Sensor"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/estadoSensor"
+        app:layout_constraintTop_toBottomOf="@+id/txtServidor" />
 </androidx.constraintlayout.widget.ConstraintLayout>

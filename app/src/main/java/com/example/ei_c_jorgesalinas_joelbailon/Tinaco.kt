@@ -16,23 +16,24 @@ import org.json.JSONObject
 
 private const val TINACO_WS_URL = "ws://jorgeeliodor.com:5000/ws/tinaco"
 
-private val COLOR_CONECTADO = Color.parseColor("#4CAF50")    // verde
-private val COLOR_DESCONECTADO = Color.parseColor("#D03F3F") // rojo
+private val COLOR_CONECTADO = Color.parseColor("#4CAF50")
+private val COLOR_DESCONECTADO = Color.parseColor("#D03F3F")
 
-/** Modelo propio del tinaco, armado a partir del JSON que manda /ws/tinaco */
 data class EstadoTinaco(
     val nivel: Double,
     val bombaEncendida: Boolean,
     val puedeEncender: Boolean,
     val puedeApagar: Boolean,
+    val espConectado: Boolean,
     val timestamp: String
 )
 
 class Tinaco : AppCompatActivity() {
 
     private lateinit var labelNivelAgua: TextView
-    private lateinit var textView3: TextView   // "Estado de la bomba"
+    private lateinit var textView3: TextView
     private lateinit var radioButton: RadioButton
+    private lateinit var radioButtonSensor: RadioButton
     private lateinit var botonEncender: Button
     private lateinit var botonApagar: Button
 
@@ -47,10 +48,12 @@ class Tinaco : AppCompatActivity() {
         labelNivelAgua = findViewById(R.id.labelNivelAgua)
         textView3 = findViewById(R.id.textView3)
         radioButton = findViewById(R.id.estadoServidor)
+        radioButtonSensor = findViewById(R.id.estadoSensor)
         botonEncender = findViewById(R.id.button4)
         botonApagar = findViewById(R.id.button5)
 
         setIndicadorConexion(conectado = false)
+        setIndicadorSensor(conectado = false)
 
         regresar.setOnClickListener {
             try {
@@ -78,6 +81,7 @@ class Tinaco : AppCompatActivity() {
                         bombaEncendida = json.getBoolean("bomba_encendida"),
                         puedeEncender = json.getBoolean("puede_encender"),
                         puedeApagar = json.getBoolean("puede_apagar"),
+                        espConectado = json.getBoolean("esp_conectado"),
                         timestamp = json.getString("timestamp")
                     )
                     runOnUiThread {
@@ -88,6 +92,7 @@ class Tinaco : AppCompatActivity() {
                             "Estado de la bomba: Apagada"
                         botonEncender.isEnabled = estado.puedeEncender
                         botonApagar.isEnabled = estado.puedeApagar
+                        setIndicadorSensor(conectado = estado.espConectado)
                     }
                 } catch (e: Exception) {
                     Log.e("TINACO", "Error al parsear mensaje", e)
@@ -124,11 +129,18 @@ class Tinaco : AppCompatActivity() {
         super.onStop()
         conexion.desconectar()
         setIndicadorConexion(conectado = false)
+        setIndicadorSensor(conectado = false)
     }
 
     private fun setIndicadorConexion(conectado: Boolean) {
         val color = if (conectado) COLOR_CONECTADO else COLOR_DESCONECTADO
         radioButton.buttonTintList = ColorStateList.valueOf(color)
         radioButton.isChecked = conectado
+    }
+
+    private fun setIndicadorSensor(conectado: Boolean) {
+        val color = if (conectado) COLOR_CONECTADO else COLOR_DESCONECTADO
+        radioButtonSensor.buttonTintList = ColorStateList.valueOf(color)
+        radioButtonSensor.isChecked = conectado
     }
 }

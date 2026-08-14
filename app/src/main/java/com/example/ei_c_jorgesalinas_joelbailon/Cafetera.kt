@@ -18,37 +18,34 @@ private const val CAFETERA_WS_URL = "ws://jorgeeliodor.com:5000/ws/cafetera"
 private val COLOR_CONECTADO = Color.parseColor("#4CAF50")    // verde
 private val COLOR_DESCONECTADO = Color.parseColor("#D03F3F") // rojo
 
-
 data class EstadoCafetera(
     val encendida: Boolean,
+    val espConectado: Boolean,
     val timestamp: String
 )
 
 class Cafetera : AppCompatActivity() {
 
-    // TODO: agrega estas vistas a tu activity_cafetera.xml con estos IDs
-    //   - RadioButton  android:id="@+id/radioButtonCafetera"
-    //   - Button       android:id="@+id/botonEncenderCafetera"
-    //   - Button       android:id="@+id/botonApagarCafetera"
     private lateinit var radioButton: RadioButton
+    private lateinit var radioButtonSensor: RadioButton
     private lateinit var botonEncender: Button
     private lateinit var botonApagar: Button
 
     private lateinit var conexion: Conexion
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_cafetera)
 
+        val regresar = findViewById<ImageButton>(R.id.imageButton)
         radioButton = findViewById(R.id.estadoServidor)
+        radioButtonSensor = findViewById(R.id.estadoSensor)
         botonEncender = findViewById(R.id.botonEncenderCafetera)
         botonApagar = findViewById(R.id.botonApagarCafetera)
-        val regresar = findViewById<ImageButton>(R.id.imageButton)
 
         setIndicadorConexion(conectado = false)
+        setIndicadorSensor(conectado = false)
 
         conexion = Conexion(
             serverUrl = CAFETERA_WS_URL,
@@ -63,11 +60,13 @@ class Cafetera : AppCompatActivity() {
                     val json = JSONObject(texto)
                     val estado = EstadoCafetera(
                         encendida = json.getBoolean("encendida"),
+                        espConectado = json.getBoolean("esp_conectado"),
                         timestamp = json.getString("timestamp")
                     )
                     runOnUiThread {
                         botonEncender.isEnabled = !estado.encendida
                         botonApagar.isEnabled = estado.encendida
+                        setIndicadorSensor(conectado = estado.espConectado)
                     }
                 } catch (e: Exception) {
                     Log.e("CAFETERA", "Error al parsear mensaje", e)
@@ -114,11 +113,18 @@ class Cafetera : AppCompatActivity() {
         super.onStop()
         conexion.desconectar()
         setIndicadorConexion(conectado = false)
+        setIndicadorSensor(conectado = false)
     }
 
     private fun setIndicadorConexion(conectado: Boolean) {
         val color = if (conectado) COLOR_CONECTADO else COLOR_DESCONECTADO
         radioButton.buttonTintList = ColorStateList.valueOf(color)
         radioButton.isChecked = conectado
+    }
+
+    private fun setIndicadorSensor(conectado: Boolean) {
+        val color = if (conectado) COLOR_CONECTADO else COLOR_DESCONECTADO
+        radioButtonSensor.buttonTintList = ColorStateList.valueOf(color)
+        radioButtonSensor.isChecked = conectado
     }
 }
