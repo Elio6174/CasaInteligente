@@ -19,11 +19,10 @@ class Conexion(
     private var webSocket: WebSocket? = null
 
     private val client = OkHttpClient.Builder()
-        .readTimeout(0, TimeUnit.MILLISECONDS) // sin timeout, la conexión debe quedar abierta
-        .pingInterval(20, TimeUnit.SECONDS)     // mantiene la conexión viva
+        .readTimeout(0, TimeUnit.MILLISECONDS)
+        .pingInterval(20, TimeUnit.SECONDS)
         .build()
 
-    /** Inicia la conexión con el servidor. */
     fun conectar() {
         val request = Request.Builder()
             .url(serverUrl)

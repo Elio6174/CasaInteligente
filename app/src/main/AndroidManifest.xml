@@ -16,6 +16,9 @@
         android:theme="@style/Theme.EI_C_JorgeSalinas_JoelBailon"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".CasaInteligente"
+            android:exported="false" />
+        <activity
             android:name=".Cafetera"
             android:exported="false" />
         <activity
